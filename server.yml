@@ -1,0 +1,33 @@
+---
+- hosts: all
+  name: install dhcp server
+  become: yes
+  become_user: root
+  vars:
+    - interface: 'eth0'
+  tasks:
+  - apt:
+      upgrade: yes
+      update_cache: yes
+      cache_valid_time: 86400 
+  - name: install dhcp server
+    apt:
+      name: isc-dhcp-server
+      state: present
+
+  - name: configruing /etc/default/isc-dhcp-server
+    lineinfile:
+      path: /etc/default/isc-dhcp-server
+      state: present
+      regex: '^#INTERFACESv4'
+      line: 'INTERFACESv4={{ interface }}'
+
+  - name: copy conf to dhcpd.conf
+    copy:
+      src: ./dhcpd.conf
+      dest: /etc/dhcp/dhcpd.conf
+
+  - name: restart dhcp server
+    service:
+      name: isc-dhcp-server
+      state: restarted
